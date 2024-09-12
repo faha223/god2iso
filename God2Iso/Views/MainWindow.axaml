@@ -10,27 +10,31 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="MinWidth" Value="100" />
+        </Style>
+    </Window.Styles>
     <StackPanel>
         <TextBlock Text="Games on Demand Packages:" Margin="10,20,10,0" />
-        <Grid Grid.ColumnDefinitions="*,auto" Margin="5,5,5,5">
+        <Grid IsEnabled="{Binding EnableUI}" Grid.ColumnDefinitions="*,auto" Margin="5,5,5,5">
             <ListBox Margin="5,0,5,0" ItemsSource="{Binding Packages}" SelectedItem="{Binding SelectedPackage}"></ListBox>
             <StackPanel Grid.Column="1" Margin="0,0,5,0">
-                <Button Width="100" HorizontalContentAlignment="Center" Command="{Binding BrowseForPackage}">Add...</Button>
-                <Button Width="100" HorizontalContentAlignment="Center" Margin="0,5,0,5" Command="{Binding RemoveSelectedPackage}">Remove</Button>
-                <Button Width="100" HorizontalContentAlignment="Center" Command="{Binding ClearPackages}">Clear</Button>
+                <Button HorizontalContentAlignment="Center" Command="{Binding BrowseForPackage}">Add...</Button>
+                <Button HorizontalContentAlignment="Center" Margin="0,5,0,5" Command="{Binding RemoveSelectedPackage}">Remove</Button>
+                <Button HorizontalContentAlignment="Center" Command="{Binding ClearPackages}">Clear</Button>
             </StackPanel>
         </Grid>
-        <DockPanel LastChildFill="True" Margin="5,5,5,5">
+        <DockPanel IsEnabled="{Binding EnableUI}" LastChildFill="True" Margin="5,5,5,5">
             <TextBlock Text="Output Directory:" DockPanel.Dock="Top" Margin="5,5,5,0" />
-            <Button DockPanel.Dock="Right" HorizontalContentAlignment="Center" Margin="0,5,5,5" Width="100" Command="{Binding BrowseForOutputDirectory}">Browse</Button>
+            <Button DockPanel.Dock="Right" HorizontalContentAlignment="Center" Margin="0,5,5,5" Command="{Binding BrowseForOutputDirectory}">Browse</Button>
             <TextBox Text="{Binding OutputDirectory}" Margin="5,5,5,5" />
         </DockPanel>
-        <CheckBox Margin="10,5,5,5" IsChecked="{Binding CreateGoodIsoHeader}">Fix "CreateIsoGood" broken header</CheckBox>
-        <Button Margin="10,10,10,10" Width="100" HorizontalContentAlignment="Center" HorizontalAlignment="Center" Command="{Binding ProcessPackages}">Go!</Button>
+        <CheckBox IsEnabled="{Binding EnableUI}" Margin="10,5,5,5" IsChecked="{Binding CreateGoodIsoHeader}">Fix "CreateIsoGood" broken header</CheckBox>
+        <Button Margin="10,10,10,10" HorizontalContentAlignment="Center" HorizontalAlignment="Center" Command="{Binding ProcessPackages}" Content="{Binding GoButtonText}" />
         <TextBlock Margin="10,10,10,0">ISO Progress:</TextBlock>
         <ProgressBar Height="20" HorizontalAlignment="Stretch" Margin="10,5,10,5" Value="{Binding PackageProgress}" Minimum="0" Maximum="1" />
         <TextBlock Margin="10,10,10,0">Total Progress:</TextBlock>
         <ProgressBar Height="20" HorizontalAlignment="Stretch" Margin="10,5,10,5" Value="{Binding OverallProgress}" Minimum="0" Maximum="1" />
-        <ListBox Margin="10,10,10,10" VerticalAlignment="Stretch" />
     </StackPanel>
 </Window>

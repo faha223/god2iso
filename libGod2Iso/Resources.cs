@@ -4,11 +4,9 @@ namespace libGod2Iso;
 
 internal static class Resources
 {
-    private static Stream LoadResourceStream(string resourceName){
-        Console.WriteLine(string.Join(Environment.NewLine, typeof(Resources).Assembly.GetManifestResourceNames()));
-        return typeof(Resources).Assembly.GetManifestResourceStream(resourceName) ??
+    private static Stream LoadResourceStream(string resourceName) =>
+        typeof(Resources).Assembly.GetManifestResourceStream(resourceName) ??
             throw new Exception("Resource Not Found: " + resourceName);
-    }
         
 
     private static byte[] LoadResource(string resourceName)

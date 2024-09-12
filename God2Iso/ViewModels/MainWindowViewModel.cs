@@ -6,6 +6,8 @@ namespace God2Iso.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
+    private CancellationTokenSource? _cts = null;
+
     GamesOnDemandConverter _converter = new()
     {
         OutputDirectory = Environment.CurrentDirectory
@@ -76,6 +78,17 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
+    private string _goButtonText = Constants.GoButtonText;
+    public string GoButtonText
+    {
+        get => _goButtonText;
+        set 
+        {
+            _goButtonText = value;
+            OnPropertyChanged(nameof(GoButtonText));
+        }
+    }
+
     public MainWindowViewModel()
     {
         _converter.ProgressChanged += Converter_ProgressChanged;
@@ -128,15 +141,31 @@ public class MainWindowViewModel : ViewModelBase
         return Task.CompletedTask;
     }
 
-    public async Task ProcessPackages()
+    public void ProcessPackages()
     {
-        EnableUI = false;
-
-        await Task.Run(() =>
+        if(_cts == null)
         {
-            _converter.ConvertPackages();
-        }).ConfigureAwait(true);
+            GoButtonText = Constants.CancelButtonText;
+            EnableUI = false;
 
-        EnableUI = true;
+            _cts = new CancellationTokenSource();
+            _ = Task.Run(() =>
+            {
+                _converter.ConvertPackages(_cts.Token);
+            }, _cts.Token)
+            .ContinueWith(task => 
+            {
+                _cts = null;
+                Dispatcher.UIThread.Invoke(() => 
+                { 
+                    GoButtonText = Constants.GoButtonText; 
+                    EnableUI = true; 
+                });
+            });
+        }
+        else
+        {
+            _cts.Cancel();
+        }
     }
 }

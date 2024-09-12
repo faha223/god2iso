@@ -12,7 +12,7 @@ public class GamesOnDemandConverter
     public bool CreateGoodIsoHeader { get;set; } = false;
 
     public List<string> Packages { get; init; } = [];
-    public bool ConvertPackages()
+    public bool ConvertPackages(CancellationToken? cancellationToken = null)
     {
         if(string.IsNullOrWhiteSpace(OutputDirectory))
             return false;
@@ -24,8 +24,12 @@ public class GamesOnDemandConverter
         ProgressChanged?.Invoke(0, 0);
         foreach(var package in Packages)
         {
-            if(!ConvertPackage(package))
+            if(cancellationToken?.IsCancellationRequested ?? false)
                 return false;
+
+            if(!ConvertPackage(package, cancellationToken))
+                return false;
+
             _packagesCompleted++;
             ProgressChanged?.Invoke(1.0f, _packagesCompleted / (float)Packages.Count);
         }
@@ -33,20 +37,24 @@ public class GamesOnDemandConverter
         return true;
     }
 
-    private bool ConvertPackage(string package)
+    private bool ConvertPackage(string package, CancellationToken? cancellationToken = null)
     {
         FileStream? iso = null;
         FileStream? data = null;
+        string baseName = Path.GetFileName(package);
+        string isoFilePath = Path.Combine(OutputDirectory, baseName + ".iso");
 
         try
         {
-            string baseName = Path.GetFileName(package);
             string dataPath = package + ".data";
 
             // count files
             int totalFiles;
             for (totalFiles = 0; true; totalFiles++) 
             {
+                if(cancellationToken?.IsCancellationRequested ?? false)
+                    return false;
+
                 string path = Path.Combine(dataPath, "Data" + totalFiles.ToString("D4"));
                 if (!File.Exists(path)) 
                     break;
@@ -58,8 +66,11 @@ public class GamesOnDemandConverter
             // check for xsf header
             bool hasXSF = HasXSFHeader(Path.Combine(dataPath, "Data0000"));
 
+            if(cancellationToken?.IsCancellationRequested ?? false)
+                return false;
+
             // open new iso file
-            iso = new FileStream(Path.Combine(OutputDirectory, baseName + ".iso"), FileMode.Create, FileAccess.ReadWrite);
+            iso = new FileStream(isoFilePath, FileMode.Create, FileAccess.ReadWrite);
 
             // add header, if needed
             if (!hasXSF) 
@@ -67,6 +78,9 @@ public class GamesOnDemandConverter
 
             // loop through data parts
             for (int i = 0; i < totalFiles; i++) {
+                if(cancellationToken?.IsCancellationRequested ?? false)
+                    return false;
+
                 var packageProgress = i / (float)totalFiles;
                 var overallProgress = (_packagesCompleted + packageProgress) / Packages.Count;
                 ProgressChanged?.Invoke(packageProgress, overallProgress);
@@ -78,6 +92,8 @@ public class GamesOnDemandConverter
 
                 int length = 0;
                 while (true) {
+                    if(cancellationToken?.IsCancellationRequested ?? false)
+                        return false;
                     byte[] buff = new byte[0xcc000];
                     length = data.Read(buff, 0, buff.Length);
                     iso.Write(buff, 0, length);
@@ -88,6 +104,9 @@ public class GamesOnDemandConverter
                 data.Close();
                 data = null;
             }
+
+            if(cancellationToken?.IsCancellationRequested ?? false)
+                return false;
 
             if (!hasXSF) {
                 FixXFSHeader(iso);
@@ -100,6 +119,8 @@ public class GamesOnDemandConverter
         {
             if (iso != null) try { iso.Close(); } catch (Exception) { }
             if (data != null) try { data.Close(); } catch (Exception) { }
+
+            ProgressChanged?.Invoke(0, 0);
         }
 
         return true;
